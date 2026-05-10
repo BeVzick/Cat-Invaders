@@ -1,6 +1,7 @@
 #pragma once
 
 #include "State.h"
+#include "EnemyCamp.h"
 #include "../managers/Managers.h"
 #include "../entities/units/Unit.h"
 #include "../tilemap/TileMap.h"
@@ -36,13 +37,18 @@ private:
     std::map<std::string, sf::Texture*> textures;
     TileMap* tilemap;
     std::vector<GameObject*> objects;
+    std::vector<EnemyCamp*> enemyCamps;
+
+    CursorMode cursorMode;
 
     bool isPaused;
-
     ImGuiWindowFlags pauseFlags;
 
     // Debug
     sf::Font font;
     sf::Text fpsText;
     float fpsTimer;
+
+    void LoadTextures();
+    void RenderPauseMenu();
 };

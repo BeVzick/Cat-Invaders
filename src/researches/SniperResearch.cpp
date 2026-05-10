@@ -1,7 +1,7 @@
 #include "SniperResearch.h"
 
 SniperResearch::SniperResearch(unsigned researchTime)
-    : Research(researchTime)
+    : Research(researchTime, "Sniper", ResearchEffect())
 {
 }
 

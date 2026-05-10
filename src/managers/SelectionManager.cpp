@@ -15,7 +15,7 @@ SelectionManager::~SelectionManager()
 {
 }
 
-void SelectionManager::UpdateUI()
+void SelectionManager::UpdateUI(CursorMode& cursor_mode)
 {
     ImGui::Begin("Selected Units");
 
@@ -64,16 +64,25 @@ void SelectionManager::UpdateUI()
 
     if (unitToRemove)
         ClearSelected(unitToRemove);
-
     ImGui::EndChild();
 
     ImGui::SameLine();
-
-    ImGui::BeginChild("Actions", {width * 0.35, 0});
-
-    ImGui::SeparatorText("Actions");
-
+    ImGui::BeginChild("Actions", {width * 0.45f, 96});
+    if (!selectedUnits.empty())
+        RenderActionBar(cursor_mode);
     ImGui::EndChild();
+
+    if (selectedUnits.size() == 1)
+    {
+        Hero* hero = dynamic_cast<Hero*>(*selectedUnits.begin());
+        if (hero && !hero->GetSkills().empty())
+        {
+            ImGui::Separator();
+            ImGui::BeginChild("Skills", {0, 56}, ImGuiChildFlags_AutoResizeY);
+            RenderSkillBar();
+            ImGui::EndChild();
+        }
+    }
 
     ImGui::End();
 }
@@ -123,4 +132,77 @@ void SelectionManager::IssueCommand(IAction *command)
 std::set<Unit *>& SelectionManager::GetSelected()
 {
     return selectedUnits;
+}
+
+void SelectionManager::RenderActionBar(CursorMode& cursor_mode)
+{
+    auto modeBtn = [&](const char* label, CursorMode mode, const char* tooltip) {
+        bool active = (cursor_mode == mode);
+        if (active)
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.3f, 1.f));
+        if (ImGui::Button(label, {52, 40}))
+            cursor_mode = (cursor_mode == mode) ? CursorMode::Normal : mode;
+        if (active)
+            ImGui::PopStyleColor();
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("%s", tooltip);
+    };
+
+    ImGui::SeparatorText("Actions");
+    modeBtn("Move", CursorMode::Move, "Right-click to move (M)");
+    ImGui::SameLine();
+    modeBtn("Attack", CursorMode::Attack, "Right-click to attack (A)");
+    ImGui::SameLine();
+    modeBtn("Defend", CursorMode::Defend, "Right-click to defend position (D)");
+
+    bool hasEngineer = std::any_of(selectedUnits.begin(), selectedUnits.end(),
+        [](Unit* u) { return dynamic_cast<Engineer*>(u) != nullptr; }
+    );
+    if (hasEngineer)
+    {
+        modeBtn("Gather", CursorMode::Gather, "Right-click resource node to gather");
+        ImGui::SameLine();
+        modeBtn("Build", CursorMode::Build, "Open build menu (B)");
+    }
+}
+
+void SelectionManager::RenderSkillBar()
+{
+    if (selectedUnits.size() != 1)
+        return;
+    Hero* hero = dynamic_cast<Hero*>(*selectedUnits.begin());
+    if (!hero)
+        return;
+
+    ImGui::SeparatorText("Skills");
+    int idx = 0;
+    for (auto* skill : hero->GetSkills())
+    {
+        if (idx > 0)
+            ImGui::SameLine();
+
+        bool ready = skill->IsReady();
+        if (!ready)
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.4f, 0.4f, 0.4f, 1.f));
+
+        if (ImGui::Button(skill->GetName().c_str(), {70, 36}) && ready)
+            hero->ActivateSkill(static_cast<unsigned>(idx));
+        
+        if (!ready)
+        {
+            float progress = skill->GetCooldownProgress();
+            ImVec2 btn = ImGui::GetItemRectMin();
+            ImVec2 btnMax = ImGui::GetItemRectMax();
+            float fill = btn.x + (btnMax.x - btn.x) * progress;
+            ImGui::GetWindowDrawList()->AddRectFilled(
+                {btn.x, btnMax.y - 4}, {fill, btnMax.y},
+                IM_COL32(80, 200, 120, 200));
+            ImGui::PopStyleColor();
+
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("%s\b%s", skill->GetName().c_str(), skill->GetDescription().c_str());
+            
+            ++idx;
+        }
+    }
 }

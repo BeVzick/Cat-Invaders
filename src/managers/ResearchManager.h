@@ -10,16 +10,27 @@ public:
     ResearchManager();
     ~ResearchManager();
 
+    void Update(float dt, std::vector<GameObject*>& objects);
     void UpdateUI();
 
-    bool IsPaused();
-    void StartResearch();
-    void StopResearch();
-    void AddResearch(Research* research);
-    void RemoveResearch();
+    bool IsPaused() const;
+    void Pause();
+    void Unpause();
+
+    void Enqueue(Research* research);
+    void CancelCurrent();
+    void ClearQueue();
+
+    void AddAvailable(Research* research);
+
+    const Research* GetCurrent() const;
+    bool HasPending() const;
+
+    const std::vector<std::string>& GetCompleted() const;
 
 private:
-    std::queue<Research*> researches;
-    std::vector<Research*> availableResearches;
+    std::queue<Research*> queue;
+    std::vector<Research*> available;
+    std::vector<std::string> completed;
     bool paused;
 };

@@ -17,6 +17,7 @@ public:
     virtual void Render(sf::RenderTarget& target);
 
     sf::Vector2f GetPos();
+    unsigned GetHealth();
 
     void SetPos(sf::Vector2f pos);
     void SetIsSelected(bool is_selected);

@@ -7,13 +7,23 @@
 #include <vector>
 #include <set>
 
+enum class CursorMode
+{
+    Normal,
+    Move,
+    Attack,
+    Defend,
+    Build,
+    Gather
+};
+
 class SelectionManager
 {
 public:
     SelectionManager(std::map<std::string, sf::Texture*>& textures, ProfileManager& profile_manager);
     ~SelectionManager();
 
-    void UpdateUI();
+    void UpdateUI(CursorMode& cursor_mode);
 
     void SetSelect(Unit* object);
     void SetSelect(Building* object);
@@ -31,4 +41,7 @@ private:
     std::map<std::string, sf::Texture*>& textures;
     std::set<Unit*> selectedUnits;
     Building* selectedBuilding;
+
+    void RenderActionBar(CursorMode& cursor_mode);
+    void RenderSkillBar();
 };

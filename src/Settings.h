@@ -21,6 +21,6 @@ struct Settings {
     unsigned antiAliasingLevel = 8;
 
     // Audio
-    unsigned masterVolume = 25;
-    unsigned musicVolume = 100;
+    int masterVolume = 25;
+    int musicVolume = 100;
 };

@@ -1,7 +1,7 @@
 #include "IronPawResearch.h"
 
 IronPawResearch::IronPawResearch(unsigned researchTime)
-    : Research(researchTime)
+    : Research(researchTime, "Iron Paw", ResearchEffect())
 {
 }
 

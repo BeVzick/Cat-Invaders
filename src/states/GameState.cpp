@@ -16,15 +16,15 @@ GameState::GameState(sf::RenderWindow& window, std::vector<State *>& states, Set
         ImGuiWindowFlags_NoResize |
         ImGuiWindowFlags_NoMove;
 
-    textures["tile"] = new sf::Texture("res/tiles/grass.png");
-    // textures["tile"] = new sf::Texture("res/tiles/test_tile.png");
+    LoadTextures();
+
     tilemap = new TileMap({50, 50, 1});
     for (int i = 0; i < 50; ++i)
         for (int j = 0; j < 50; ++j)
         {
             // int r = std::rand() % 2;
 
-            tilemap->SetTile({i, j, 0}, new Tile(*textures["tile"],
+            tilemap->SetTile({i, j, 0}, new Tile(*textures["grass"],
                 sf::IntRect({0, 0}, {32, 32}),
                 CoordinatesCovnverter::WorldToIso({i, j}, {32, 32})
             ));
@@ -37,19 +37,19 @@ GameState::GameState(sf::RenderWindow& window, std::vector<State *>& states, Set
     selectionManager = new SelectionManager(textures, *profileManager);
     groupManager = new GroupManager(textures, *selectionManager, *profileManager);
     
-    textures["captain"] = new sf::Texture("res/sprites/units/heroes/captain.png");
-    textures["captain_icon"] = new sf::Texture("res/icons/captain_icon.png");
     Captain* c = new Captain(*textures["captain"]);
     c->SetPos({50, 100});
     objects.push_back(c);
 
-    textures["engineer"] = new sf::Texture("res/sprites/units/engineer.png");
-    textures["engineer_icon"] = new sf::Texture("res/icons/engineer_icon.png");
     objects.push_back(new Engineer(*textures["engineer"]));
     Engineer* e = new Engineer(*textures["engineer"]);
     e->SetPos({100, 50});
     objects.push_back(e);
-    textures["bat"] = new sf::Texture("res/sprites/enemies/bat.png");
+
+    EnemyCamp* camp = new EnemyCamp(*textures["tile"], {400, 300}, 30.f, 180.f, 4);
+    camp->AddWaveEntry(EnemyType::Bat, 2);
+    enemyCamps.push_back(camp);
+
     objects.push_back(new Bat(*textures["bat"]));
 
     fpsText.setCharacterSize(18);
@@ -115,61 +115,22 @@ void GameState::Update(float dt)
             obj->UpdateAnimations(dt);
     }
 
-    if (ImGui::IsKeyReleased(ImGuiKey_Escape))
-        isPaused = !isPaused;
+    for (auto* camp : enemyCamps)
+    {
+        camp->Update({}, dt);
+        camp->CheckAggro(objects, objects);
+    }
 
-    
+    if (ImGui::IsKeyReleased(ImGuiKey_Escape))
+        isPaused = !isPaused;    
     
     if (isPaused)
-    {
-        ImGui::SetNextWindowPos({ImGui::GetIO().DisplaySize.x * 0.5, ImGui::GetIO().DisplaySize.y * 0.5}, 0, {0.5f, 0.5f});
-        ImGui::SetNextWindowSize({ImGui::GetIO().DisplaySize.x * 0.3, ImGui::GetIO().DisplaySize.y * 0.6});
-
-        ImGui::Begin("Pause", nullptr, pauseFlags);
-
-        if (ImGui::BeginTable("PauseTable", 3))
-        {
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-            ImGui::TableNextColumn();
-
-            ImGui::SetWindowFontScale(3);
-            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - ImGui::CalcTextSize("PAUSE").x) / 2);
-            ImGui::Text("PAUSE", ImGui::GetFontSize(), 24);
-            ImGui::SetWindowFontScale(1);
-
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-            ImGui::TableNextColumn();
-
-            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) / 2);
-            if (ImGui::Button("Resume", {250, 50}))
-                isPaused = false;
-
-            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) / 2);
-            if (ImGui::Button("Save", {250, 50}))
-                isPaused = false;
-
-            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) / 2);
-            if (ImGui::Button("Settings", {250, 50}))
-                PushState(new SettingsState(window, states, settings));
-            
-            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) / 2);
-            if (ImGui::Button("Save & quit", {250, 50}))
-                quit = true;
-
-            ImGui::TableNextColumn();
-
-            ImGui::EndTable();
-        }
-
-        ImGui::End();
-    }
+        RenderPauseMenu();
     else
     {
         resourceManager->UpdateUI();
         researchManager->UpdateUI();
-        selectionManager->UpdateUI();
+        selectionManager->UpdateUI(cursorMode);
         groupManager->UpdateUI();
         profileManager->Show();
 
@@ -230,6 +191,10 @@ void GameState::Render()
     for (auto* obj : objects)
         obj->Render(window);
 
+    for (auto* camp : enemyCamps)
+        camp->Render(window);
+
+
     if (selectRect.GetStartedSelection())
         selectRect.Render(window);
 
@@ -242,4 +207,67 @@ void GameState::Render()
 void GameState::OnResize()
 {
     UpdateViewport();
+}
+
+void GameState::LoadTextures()
+{
+    auto load = [&](const std::string& key, const std::string& path) {
+        textures[key] = new sf::Texture(path);
+    };
+    load("tile", "res/tiles/test_tile.png");
+    load("grass", "res/tiles/grass.png");
+    
+    load("engineer_icon", "res/icons/engineer_icon.png");
+    load("captain_icon", "res/icons/captain_icon.png");
+
+    load("engineer", "res/sprites/units/engineer.png");
+    load("captain", "res/sprites/units/heroes/captain.png");
+
+    load("bat", "res/sprites/enemies/bat.png");
+}
+
+void GameState::RenderPauseMenu()
+{
+    ImGui::SetNextWindowPos({ImGui::GetIO().DisplaySize.x * 0.5, ImGui::GetIO().DisplaySize.y * 0.5}, 0, {0.5f, 0.5f});
+        ImGui::SetNextWindowSize({ImGui::GetIO().DisplaySize.x * 0.3, ImGui::GetIO().DisplaySize.y * 0.6});
+
+        ImGui::Begin("Pause", nullptr, pauseFlags);
+
+        if (ImGui::BeginTable("PauseTable", 3))
+        {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::TableNextColumn();
+
+            ImGui::SetWindowFontScale(3);
+            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - ImGui::CalcTextSize("PAUSE").x) / 2);
+            ImGui::Text("PAUSE", ImGui::GetFontSize(), 24);
+            ImGui::SetWindowFontScale(1);
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::TableNextColumn();
+
+            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) / 2);
+            if (ImGui::Button("Resume", {250, 50}))
+                isPaused = false;
+
+            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) / 2);
+            if (ImGui::Button("Save", {250, 50}))
+                isPaused = false;
+
+            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) / 2);
+            if (ImGui::Button("Settings", {250, 50}))
+                PushState(new SettingsState(window, states, settings));
+            
+            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) / 2);
+            if (ImGui::Button("Save & quit", {250, 50}))
+                quit = true;
+
+            ImGui::TableNextColumn();
+
+            ImGui::EndTable();
+        }
+
+        ImGui::End();
 }

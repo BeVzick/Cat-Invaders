@@ -1,7 +1,7 @@
 #include "ScratcherResearch.h"
 
 ScratcherResearch::ScratcherResearch(unsigned researchTime)
-    : Research(researchTime)
+    : Research(researchTime, "Scratcher", ResearchEffect())
 {
 }
 

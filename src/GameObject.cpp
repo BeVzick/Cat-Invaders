@@ -35,6 +35,11 @@ sf::Vector2f GameObject::GetPos()
     return pos;
 }
 
+unsigned GameObject::GetHealth()
+{
+    return health;
+}
+
 void GameObject::SetPos(sf::Vector2f pos)
 {
     this->pos = pos;

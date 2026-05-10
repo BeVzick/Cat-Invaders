@@ -14,7 +14,15 @@ void Hero::ShowData()
     Entity::ShowData();
 }
 
-bool Hero::GetIsLeader()
+void Hero::Update(sf::Vector2f mouse_pos_view, float dt)
+{
+    Unit::Update(mouse_pos_view, dt);
+
+    for (auto* s : skills)
+        s->Update(dt);
+}
+
+bool Hero::GetIsLeader() const
 {
     return isLeader;
 }
@@ -22,4 +30,20 @@ bool Hero::GetIsLeader()
 void Hero::SetIsLeader(bool is_leader)
 {
     isLeader = is_leader;
+}
+
+void Hero::AddSkill(ISkill *skill)
+{
+    skills.push_back(skill);
+}
+
+const std::vector<ISkill *> &Hero::GetSkills() const
+{
+    return skills;
+}
+
+void Hero::ActivateSkill(unsigned index)
+{
+    if (index < skills.size())
+        skills[index]->Activate(*this);
 }
