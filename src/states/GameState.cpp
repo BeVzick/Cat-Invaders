@@ -6,6 +6,7 @@
 #include "../entities/enemies/Bat.h"
 #include "../utills/CoordinatesConverter.h"
 #include "../actions/MoveToAction.h"
+#include "../utills/CameraBounds.h"
 #include <random>
 #include <imgui.h>
 
@@ -29,6 +30,7 @@ GameState::GameState(sf::RenderWindow& window, std::vector<State *>& states, Set
                 CoordinatesCovnverter::WorldToIso({i, j}, {32, 32})
             ));
         }
+    CameraBounds::SetMapSize({50, 50}, {32, 16});
 
     resourceManager = new ResourceManager();
     researchManager = new ResearchManager();
@@ -146,6 +148,8 @@ void GameState::Update(float dt)
                 view.move(sf::Vector2f(-500.f, 0.f) * dt);
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D) || mousePosView.x <= window.getSize().x && mousePosView.x >= window.getSize().x - 20.f)
                 view.move(sf::Vector2f(500.f, 0.f) * dt);
+
+            CameraBounds::Clamp(view);
 
             if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right))
             {

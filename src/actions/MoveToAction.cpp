@@ -2,8 +2,8 @@
 
 #include "../entities/Entity.h"
 
-MoveToAction::MoveToAction(sf::Vector2f target_pos)
-    : targetPos(target_pos)
+MoveToAction::MoveToAction(sf::Vector2f target_pos, float arrival_threshold)
+    : targetPos(target_pos), arrivalThreshold(arrival_threshold), done(false)
 {
 }
 
@@ -11,52 +11,65 @@ MoveToAction::~MoveToAction()
 {
 }
 
-void MoveToAction::Update(Entity& owner, float dt)
+void MoveToAction::Start(Entity &owner)
 {
+    done = false;
+    sf::Vector2f dir = targetPos - owner.GetPos();
+    float dist = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+    if (dist > arrivalThreshold)
+        owner.SetState(DirectionFromAngle(std::atan2(dir.y, dir.x)));
+}
+
+void MoveToAction::Update(Entity &owner, float dt)
+{
+    if (done)
+        return;
+
     sf::Vector2f currPos = owner.GetPos();
     sf::Vector2f dir = targetPos - currPos;
+    float dist = std::sqrt(dir.x * dir.x + dir.y * dir.y);
 
-    float distance = std::sqrt(dir.x * dir.x + dir.y * dir.y);
-
-    if (distance <= 5.0f)
+    if (dist <= arrivalThreshold)
     {
-        isDone = true;
         owner.SetState(DEFAULT);
+        done = true;
         return;
     }
 
-    dir /= distance;
-
-    owner.SetPos(currPos + dir * owner.GetSpeed() * dt);
-
-    float angle = std::atan2(dir.y, dir.x);
-    int octant = std::round(8 * angle / (2 * M_PI) + 8);
-    octant %= 8;
-
-    EntityState state = DEFAULT;
-    switch (octant)
-    {
-    case 0: state = MOVE_RIGHT;
-        break;
-    case 1: state = MOVE_DOWN_RIGHT;
-        break;
-    case 2: state = MOVE_DOWN;
-        break;
-    case 3: state = MOVE_DOWN_LEFT;
-        break;
-    case 4: state = MOVE_LEFT;
-        break;
-    case 5: state = MOVE_UP_LEFT;
-        break;
-    case 6: state = MOVE_UP;
-        break;
-    case 7: state = MOVE_UP_RIGHT;
-        break;
-    }
-    owner.SetState(state);
+    dir /= dist;
+    float speed = owner.GetSpeed();
+    float step = std::min(speed * dt, dist - arrivalThreshold);
+    owner.SetPos(currPos + dir * step);
+    owner.SetState(DirectionFromAngle(std::atan2(dir.y, dir.x)));
 }
 
 bool MoveToAction::IsDone() const
 {
-    return isDone;
+    return done;
+}
+
+void MoveToAction::Cancel()
+{
+    done = true;
+}
+
+EntityState MoveToAction::DirectionFromAngle(float angle_rad)
+{
+    if (angle_rad < 0.f)
+        angle_rad += 2.f * static_cast<float>(M_PI);
+
+    int octant = static_cast<int>(angle_rad / (2.f * static_cast<float>(M_PI) / 8.f)) % 8;
+
+    switch (octant)
+    {
+    case 0: return MOVE_RIGHT;
+    case 1: return MOVE_DOWN_RIGHT;
+    case 2: return MOVE_DOWN;
+    case 3: return MOVE_DOWN_LEFT;
+    case 4: return MOVE_LEFT;
+    case 5: return MOVE_UP_LEFT;
+    case 6: return MOVE_UP;
+    case 7: return MOVE_UP_RIGHT;
+    default: return DEFAULT;
+    }
 }

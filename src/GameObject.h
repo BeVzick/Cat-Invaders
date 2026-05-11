@@ -16,11 +16,14 @@ public:
     virtual void Update(sf::Vector2f mouse_pos_view, const float dt);
     virtual void Render(sf::RenderTarget& target);
 
-    sf::Vector2f GetPos();
-    unsigned GetHealth();
+    sf::Vector2f GetPos() const;
+    unsigned GetHealth() const;
+    bool GetIsSelected() const;
 
     void SetPos(sf::Vector2f pos);
     void SetIsSelected(bool is_selected);
+
+    void TakeDamage(unsigned damage);
 
 protected:
     AnimationComponent* animationComponent;

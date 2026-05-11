@@ -9,6 +9,9 @@ GameObject::GameObject(sf::Texture& texture, sf::Vector2i frame_size, sf::Vector
     : sprite(texture), pos(pos), isSelected(false)
 {
     animationComponent = new AnimationComponent(sprite, frame_size);
+
+    sprite.setOrigin({frame_size.x * 0.5f, frame_size.y * 0.5f});
+    sprite.setPosition(pos);
 }
 
 GameObject::~GameObject()
@@ -30,14 +33,19 @@ void GameObject::Render(sf::RenderTarget& target)
     target.draw(sprite);
 }
 
-sf::Vector2f GameObject::GetPos()
+sf::Vector2f GameObject::GetPos() const
 {
     return pos;
 }
 
-unsigned GameObject::GetHealth()
+unsigned GameObject::GetHealth() const
 {
     return health;
+}
+
+bool GameObject::GetIsSelected() const
+{
+    return isSelected;
 }
 
 void GameObject::SetPos(sf::Vector2f pos)
@@ -49,4 +57,10 @@ void GameObject::SetPos(sf::Vector2f pos)
 void GameObject::SetIsSelected(bool is_selected)
 {
     isSelected = is_selected;
+}
+
+void GameObject::TakeDamage(unsigned damage)
+{
+    damage = std::min(health, damage);
+    health -= damage;
 }

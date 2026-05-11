@@ -10,6 +10,25 @@ struct WaveEntry
     unsigned count;
 };
 
+class AggroEllipse
+{
+public:
+    AggroEllipse(float radius_x, float radius_y, unsigned point_count = 60);
+
+    void SetPosition(sf::Vector2f pos);
+    void Render(sf::RenderTarget& target);
+
+private:
+    sf::VertexArray fill;
+    sf::VertexArray outline;
+    float rx;
+    float ry;
+    sf::Vector2f center;
+    unsigned pointCount;
+
+    void Rebuild();
+};
+
 class EnemyCamp : public GameObject
 {
 public:
@@ -37,7 +56,7 @@ private:
     unsigned maxEnemies;
     bool aggroed;
     bool destroyed;
-    sf::CircleShape aggroCircle;
+    AggroEllipse aggroShape;
 
     void SpawnWave(const std::vector<GameObject*>& worldObjects, std::map<std::string, sf::Texture*>& textures);
 };

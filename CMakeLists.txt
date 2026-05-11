@@ -8,6 +8,7 @@ find_package(OpenGL REQUIRED)
 find_package(SFML COMPONENTS System Window Graphics Audio REQUIRED)
 find_package(ImGui-SFML REQUIRED)
 find_package(imgui REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
@@ -23,10 +24,16 @@ target_link_libraries(${PROJECT_NAME}
     OpenGL::GL
     imgui::imgui
     ImGui-SFML::ImGui-SFML
+    nlohmann_json::nlohmann_json
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     "${CMAKE_CURRENT_SOURCE_DIR}/res"
     "$<TARGET_FILE_DIR:${PROJECT_NAME}>/res"
+)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/saves"
 )

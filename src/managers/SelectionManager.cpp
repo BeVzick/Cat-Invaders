@@ -1,5 +1,6 @@
 #include "SelectionManager.h"
 
+#include "../utills/ClampWindows.h"
 #include "../entities/units/Engineer.h"
 #include "../entities/units/heroes/Captain.h"
 #include <algorithm>
@@ -18,6 +19,7 @@ SelectionManager::~SelectionManager()
 void SelectionManager::UpdateUI(CursorMode& cursor_mode)
 {
     ImGui::Begin("Selected Units");
+    ClampImGuiWindow();
 
     float width = ImGui::GetContentRegionAvail().x;
 

@@ -1,5 +1,6 @@
 #include "ResearchManager.h"
 
+#include "../utills/ClampWindows.h"
 #include "../researches/IronPawResearch.h"
 #include <algorithm>
 #include <imgui.h>
@@ -37,6 +38,7 @@ void ResearchManager::Update(float dt, std::vector<GameObject *>& objects)
 void ResearchManager::UpdateUI()
 {
     ImGui::Begin("Research", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+    ClampImGuiWindow();
 
     if (!queue.empty())
     {

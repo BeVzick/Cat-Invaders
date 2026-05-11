@@ -1,5 +1,6 @@
 #include "GroupManager.h"
 
+#include "../utills/ClampWindows.h"
 #include "../entities/units/Engineer.h"
 #include "../entities/units/heroes/Captain.h"
 #include <cstring>
@@ -77,6 +78,7 @@ GroupManager::~GroupManager()
 void GroupManager::UpdateUI()
 {
     ImGui::Begin("Groups", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+    ClampImGuiWindow();
 
     if (ImGui::SmallButton("New Group"))
         NewGroup();

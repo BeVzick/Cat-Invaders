@@ -1,5 +1,6 @@
 #include "ResourceManager.h"
 
+#include "../utills/ClampWindows.h"
 #include <string>
 #include <imgui.h>
 
@@ -15,6 +16,7 @@ ResourceManager::~ResourceManager()
 void ResourceManager::UpdateUI()
 {
     ImGui::Begin("Resources", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+    ClampImGuiWindow();
 
     std::string scrapMetalsStr = std::to_string(scrapMetals);
     std::string plasmaShardsStr = std::to_string(plasmaShards);
