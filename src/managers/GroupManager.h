@@ -4,6 +4,7 @@
 #include "ProfileManager.h"
 #include "../entities/units/heroes/Hero.h"
 #include <set>
+#include <nlohmann/json.hpp>
 
 class Group
 {
@@ -21,6 +22,8 @@ public:
     void AddToGroup(Unit* unit);
     void RemoveFropGroup(Unit* unit);
 
+    nlohmann::json Serialize();
+
 private:
     std::string name;
     Hero* leader;
@@ -29,17 +32,24 @@ private:
 
 class GroupManager
 {
+    friend Group;
 public:
     GroupManager(std::map<std::string, sf::Texture*>& textures, SelectionManager& selection_manager, ProfileManager& profile_manager);
     ~GroupManager();
 
     void UpdateUI();
 
+    unsigned GetNewGroupID();
+    void SetNewGroupID(unsigned id);
+
     const Group& GetGroup(std::string_view name);
     const Group& GetGroup(unsigned index);
     void NewGroup();
     void RemoveGroup(unsigned index);
     void RemoveAllGroups();
+
+    nlohmann::json Serialize();
+    void Deserialize(const nlohmann::json& data, std::vector<GameObject*>& objects);
 
 private:
     std::map<std::string, sf::Texture*>& textures;

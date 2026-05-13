@@ -89,3 +89,24 @@ void Entity::SetState(EntityState state)
 {
     this->state = state;
 }
+
+nlohmann::json Entity::Serialize()
+{
+    nlohmann::json object = GameObject::Serialize();
+
+    object["state"] = state;
+
+    return object;
+}
+
+void Entity::Deserialize(const nlohmann::json& data)
+{
+    GameObject::Deserialize(data);
+
+    state = data.value("state", DEFAULT);
+}
+
+std::string Entity::GetType() const
+{
+    return "Entity";
+}

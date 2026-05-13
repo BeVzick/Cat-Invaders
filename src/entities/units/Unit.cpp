@@ -65,3 +65,8 @@ void Unit::SetHasGroup(bool has_group)
 {
     hasGroup = has_group;
 }
+
+std::string Unit::GetType() const
+{
+    return "Unit";
+}

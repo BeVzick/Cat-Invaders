@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utills/AnimationComponent.h"
+#include <nlohmann/json.hpp>
 
 class ProfileManager;
 
@@ -16,6 +17,9 @@ public:
     virtual void Update(sf::Vector2f mouse_pos_view, const float dt);
     virtual void Render(sf::RenderTarget& target);
 
+    static void InitNewID(unsigned long new_id);
+
+    unsigned long GetID() const;
     sf::Vector2f GetPos() const;
     unsigned GetHealth() const;
     bool GetIsSelected() const;
@@ -25,13 +29,21 @@ public:
 
     void TakeDamage(unsigned damage);
 
+    virtual nlohmann::json Serialize();
+    virtual void Deserialize(const nlohmann::json& data);
+
 protected:
     AnimationComponent* animationComponent;
+    unsigned long id;
     unsigned health;
     unsigned maxHealth;
     bool isSelected;
 
+    virtual std::string GetType() const;
+
 private:
     sf::Sprite sprite;
     sf::Vector2f pos;
+
+    static unsigned long newID;
 };

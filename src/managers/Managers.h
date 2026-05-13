@@ -6,3 +6,4 @@
 #include "GroupManager.h"
 #include "SelectionManager.h"
 #include "ProfileManager.h"
+#include "SaveManager.h"

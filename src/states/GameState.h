@@ -1,7 +1,7 @@
 #pragma once
 
 #include "State.h"
-#include "EnemyCamp.h"
+#include "../buildings/EnemyCamp.h"
 #include "../managers/Managers.h"
 #include "../entities/units/Unit.h"
 #include "../tilemap/TileMap.h"
@@ -21,6 +21,9 @@ public:
     void Render() override;
 
     void OnResize() override;
+    
+    nlohmann::json Serialize();
+    void Deserialize(const nlohmann::json& data);
 
 private:
     ResourceManager* resourceManager;
@@ -29,6 +32,7 @@ private:
     GroupManager* groupManager;
     SelectionManager* selectionManager;
     ProfileManager* profileManager;
+    SaveManager* saveManager;
 
     SelectRect selectRect;
 
@@ -42,7 +46,8 @@ private:
     CursorMode cursorMode;
 
     bool isPaused;
-    ImGuiWindowFlags pauseFlags;
+    bool isSaving;
+    ImGuiWindowFlags windowFlags;
 
     // Debug
     sf::Font font;
@@ -51,4 +56,5 @@ private:
 
     void LoadTextures();
     void RenderPauseMenu();
+    void RenderSavesManu();
 };

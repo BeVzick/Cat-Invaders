@@ -43,3 +43,8 @@ Engineer::Engineer(sf::Texture& texture)
 Engineer::~Engineer()
 {
 }
+
+std::string Engineer::GetType() const
+{
+    return "Engineer";
+}

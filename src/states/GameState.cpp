@@ -11,9 +11,9 @@
 #include <imgui.h>
 
 GameState::GameState(sf::RenderWindow& window, std::vector<State *>& states, Settings& settings)
-    : State(window, states, settings), /* Debug */ font("/usr/share/fonts/TTF/Hack-Regular.ttf"), fpsText(font), fpsTimer(0.f), isPaused(false)
+    : State(window, states, settings), /* Debug */ font("/usr/share/fonts/TTF/Hack-Regular.ttf"), fpsText(font), fpsTimer(0.f), isPaused(false), isSaving(false)
 {
-    pauseFlags = ImGuiWindowFlags_NoTitleBar |
+    windowFlags = ImGuiWindowFlags_NoTitleBar |
         ImGuiWindowFlags_NoResize |
         ImGuiWindowFlags_NoMove;
 
@@ -38,6 +38,7 @@ GameState::GameState(sf::RenderWindow& window, std::vector<State *>& states, Set
     profileManager = new ProfileManager();
     selectionManager = new SelectionManager(textures, *profileManager);
     groupManager = new GroupManager(textures, *selectionManager, *profileManager);
+    saveManager = new SaveManager();
     
     Captain* c = new Captain(*textures["captain"]);
     c->SetPos({50, 100});
@@ -68,6 +69,7 @@ GameState::~GameState()
     delete groupManager;
     delete selectionManager;
     delete profileManager;
+    delete saveManager;
 
     delete tilemap;
 
@@ -121,13 +123,17 @@ void GameState::Update(float dt)
     {
         camp->Update({}, dt);
         camp->CheckAggro(objects, objects);
-    }
-
-    if (ImGui::IsKeyReleased(ImGuiKey_Escape))
-        isPaused = !isPaused;    
+    }  
     
-    if (isPaused)
+    if (isSaving)
+        RenderSavesManu();
+    else if (isPaused)
+    {
         RenderPauseMenu();
+
+        if (ImGui::IsKeyReleased(ImGuiKey_Escape))
+            isPaused = false;
+    }
     else
     {
         resourceManager->UpdateUI();
@@ -177,6 +183,9 @@ void GameState::Update(float dt)
             selectRect.SelectUnits(window, view, *selectionManager, objects);
             selectRect.Reset();
         }
+
+        if (ImGui::IsKeyReleased(ImGuiKey_Escape))
+            isPaused = true;
     }
 
     if (fpsTimer >= 0.25f)
@@ -233,45 +242,197 @@ void GameState::LoadTextures()
 void GameState::RenderPauseMenu()
 {
     ImGui::SetNextWindowPos({ImGui::GetIO().DisplaySize.x * 0.5, ImGui::GetIO().DisplaySize.y * 0.5}, 0, {0.5f, 0.5f});
-        ImGui::SetNextWindowSize({ImGui::GetIO().DisplaySize.x * 0.3, ImGui::GetIO().DisplaySize.y * 0.6});
+    ImGui::SetNextWindowSize({ImGui::GetIO().DisplaySize.x * 0.3, ImGui::GetIO().DisplaySize.y * 0.6});
 
-        ImGui::Begin("Pause", nullptr, pauseFlags);
+    ImGui::Begin("Pause", nullptr, windowFlags | ImGuiWindowFlags_NoScrollbar);
 
-        if (ImGui::BeginTable("PauseTable", 3))
+    if (ImGui::BeginTable("PauseTable", 3))
+    {
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::TableNextColumn();
+
+        ImGui::SetWindowFontScale(3);
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - ImGui::CalcTextSize("PAUSE").x) / 2);
+        ImGui::Text("PAUSE", ImGui::GetFontSize(), 24);
+        ImGui::SetWindowFontScale(1);
+
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::TableNextColumn();
+
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) / 2);
+        if (ImGui::Button("Resume", {250, 50}))
+            isPaused = false;
+
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) / 2);
+        if (ImGui::Button("Saves", {250, 50}))
+            isSaving = true;
+
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) / 2);
+        if (ImGui::Button("Settings", {250, 50}))
+            PushState(new SettingsState(window, states, settings));
+        
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) / 2);
+        if (ImGui::Button("Quit", {250, 50}))
+            quit = true;
+
+        ImGui::TableNextColumn();
+
+        ImGui::EndTable();
+    }
+
+    ImGui::End();
+}
+
+void GameState::RenderSavesManu()
+{
+    ImGui::SetNextWindowPos({ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f}, 0, {0.5f, 0.5f});
+    ImGui::SetNextWindowSize({ImGui::GetIO().DisplaySize.x * 0.4f, ImGui::GetIO().DisplaySize.y * 0.6f});
+
+    ImGui::Begin("Save", nullptr, windowFlags);
+
+    if (ImGui::Button("Exit"))
+        isSaving = false;
+
+    std::vector<SaveSlot> slots = saveManager->GetSlots();
+
+    for (int i = 0; i < slots.size(); ++i)
+    {
+        ImGui::BeginChild(("SaveSlot" + std::to_string(i)).c_str(), {}, ImGuiChildFlags_Border | ImGuiChildFlags_AutoResizeY);
+
+        if (ImGui::BeginTable("SlotLayout", 2))
         {
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-            ImGui::TableNextColumn();
-
-            ImGui::SetWindowFontScale(3);
-            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - ImGui::CalcTextSize("PAUSE").x) / 2);
-            ImGui::Text("PAUSE", ImGui::GetFontSize(), 24);
-            ImGui::SetWindowFontScale(1);
+            ImGui::TableSetupColumn("Text", ImGuiTableColumnFlags_WidthStretch);
 
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            ImGui::TableNextColumn();
-
-            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) / 2);
-            if (ImGui::Button("Resume", {250, 50}))
-                isPaused = false;
-
-            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) / 2);
-            if (ImGui::Button("Save", {250, 50}))
-                isPaused = false;
-
-            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) / 2);
-            if (ImGui::Button("Settings", {250, 50}))
-                PushState(new SettingsState(window, states, settings));
-            
-            ImGui::SetCursorPosX((ImGui::GetWindowSize().x - 250) / 2);
-            if (ImGui::Button("Save & quit", {250, 50}))
-                quit = true;
+            ImGui::Text(slots[i].GetName().c_str());
 
             ImGui::TableNextColumn();
+            if (ImGui::Button("Save"))
+                saveManager->SaveGame(i, Serialize());
+            ImGui::SameLine();
+            if (ImGui::Button("Load"))
+                saveManager->LoadGame(i, *this);
+            ImGui::SameLine();
+            if (ImGui::Button("Delete"))
+                saveManager->DeleteSlot(i);
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text(slots[i].GetDatetime().c_str());
+
+            ImGui::TableNextColumn();
+
+            ImGui::Text(SaveManager::FormatTimePlayed(slots[i].GetTimePlayed()).c_str());
 
             ImGui::EndTable();
         }
 
-        ImGui::End();
+        ImGui::EndChild();
+    }
+
+    if (ImGui::Button("New Slot", {ImGui::GetContentRegionAvail().x, 0}))
+        ImGui::OpenPopup("New Slot");
+
+    if (ImGui::BeginPopupModal("New Slot", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+    {
+        static char buffer[32] = "";
+        ImGui::InputText("Name", buffer, sizeof(buffer));
+
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        if (ImGui::Button("Ok"))
+        {
+            saveManager->NewSlot(buffer);
+            strcpy(buffer, "");
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel"))
+        {
+            strcpy(buffer, "");
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+
+    ImGui::End();
+}
+
+nlohmann::json GameState::Serialize()
+{
+    nlohmann::json gameState;
+
+    gameState["view"] = nlohmann::json::object();
+    gameState["view"]["pos"] = {{"x", view.getCenter().x}, {"y", view.getCenter().y}};
+
+    gameState["new_group_id"] = groupManager->GetNewGroupID();
+    gameState["groups"] = groupManager->Serialize();
+
+    gameState["objects"] = nlohmann::json::array();
+    for (auto& obj : objects)
+        gameState["objects"].push_back(obj->Serialize());
+
+    gameState["enemy_camps"] = nlohmann::json::array();
+    for (auto& enemyCamp : enemyCamps)
+        gameState["enemy_camps"].push_back(enemyCamp->Serialize());
+    
+    return gameState;
+}
+
+void GameState::Deserialize(const nlohmann::json& data)
+{
+    for (auto* obj : objects)
+        delete obj;
+    objects.clear();
+
+    for (auto* enemyCamp : enemyCamps)
+        delete enemyCamp;
+    enemyCamps.clear();
+
+    unsigned long maxNewID = 0;
+    nlohmann::json posJson = data["view"]["pos"];
+    sf::Vector2f viewPos = {posJson.value("x", 0), posJson.value("y", 0)};
+    view.setCenter(viewPos);
+
+    
+    nlohmann::json objectsJson = data["objects"];
+    for (auto& objJson : objectsJson)
+    {
+        if (objJson.value("id", 0) > maxNewID)
+            maxNewID = objJson.value("id", 0) + 1;
+
+        std::string type = objJson.value("type", "");
+
+        GameObject* object;
+        if (type == "Engineer")
+            object = new Engineer(*textures["engineer"]);
+        else if (type == "Captain")
+            object = new Captain(*textures["captain"]);
+        else if (type == "Bat")
+            object = new Bat(*textures["bat"]);
+        object->Deserialize(objJson);
+        objects.push_back(object);
+    }
+
+    groupManager->SetNewGroupID(data.value("new_group_id", 0));
+    groupManager->Deserialize(data["groups"], objects);
+
+    nlohmann::json enemyCampsJson = data["enemy_camps"];
+    for (auto& enemyCampJson : enemyCampsJson)
+    {
+        if (enemyCampJson.value("id", 0) > maxNewID)
+            maxNewID = enemyCampJson.value("id", 0) + 1;
+
+        EnemyCamp* camp = new EnemyCamp(*textures["tile"]);
+        camp->Deserialize(enemyCampJson);
+        enemyCamps.push_back(camp);
+    }
+
+    GameObject::InitNewID(maxNewID);
 }

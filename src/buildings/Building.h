@@ -14,5 +14,7 @@ protected:
     unsigned level;
     unsigned maxLevel;
     bool isCompleted;
+
+    std::string GetType() const override;
 };
 

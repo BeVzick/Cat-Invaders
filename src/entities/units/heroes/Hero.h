@@ -21,5 +21,7 @@ public:
 
 protected:
     bool isLeader;
-    std::vector<ISkill*> skills; 
+    std::vector<ISkill*> skills;
+
+    std::string GetType() const override;
 };

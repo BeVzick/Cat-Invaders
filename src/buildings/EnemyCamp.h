@@ -1,6 +1,6 @@
 #pragma once
 
-#include "entities/enemies/Enemy.h"
+#include "../entities/enemies/Enemy.h"
 #include <vector>
 #include <SFML/Graphics/CircleShape.hpp>
 
@@ -32,6 +32,7 @@ private:
 class EnemyCamp : public GameObject
 {
 public:
+    EnemyCamp(sf::Texture& texture);
     EnemyCamp(sf::Texture& texture, sf::Vector2f pos, float spawn_interval, float aggro_radius, unsigned max_enemies);
     ~EnemyCamp();
 
@@ -46,6 +47,9 @@ public:
 
     void CheckAggro(const std::vector<GameObject*>& objects, const std::vector<GameObject*>& worldObjects);
     float GetAggroRadius() const;
+
+protected:
+    std::string GetType() const override;
 
 private:
     std::vector<WaveEntry> waveEntries;

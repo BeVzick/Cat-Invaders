@@ -8,3 +8,8 @@ Scratcher::Scratcher(sf::Texture &texture)
 Scratcher::~Scratcher()
 {
 }
+
+std::string Scratcher::GetType() const
+{
+    return "Scratcher";
+}

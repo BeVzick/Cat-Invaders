@@ -62,6 +62,23 @@ void Group::RemoveFropGroup(Unit* unit)
     units.erase(unit);
 }
 
+nlohmann::json Group::Serialize()
+{
+    nlohmann::json group = nlohmann::json::object();
+
+    group["name"] = name;
+
+    if (leader)
+        group["leader_id"] = leader->GetID();
+
+    nlohmann::json unitIDs = nlohmann::json::array();
+    for (auto& unit : units)
+        unitIDs.push_back(unit->GetID());
+    group["units"] = unitIDs;
+
+    return group;
+}
+
 unsigned GroupManager::newGroupID = 0;
 
 GroupManager::GroupManager(std::map<std::string, sf::Texture*>& textures, SelectionManager& selection_manager, ProfileManager& profile_manager)
@@ -168,7 +185,7 @@ void GroupManager::UpdateUI()
 
             ImGui::Separator();
 
-            ImGui::BeginChild("Units", {0 ,0}, ImGuiChildFlags_AutoResizeY);
+            ImGui::BeginChild(("Units##" + std::to_string(i)).c_str(), {0 ,0}, ImGuiChildFlags_AutoResizeY);
 
             int j = 0;
             for (auto& unit : group->GetUnits())
@@ -181,7 +198,7 @@ void GroupManager::UpdateUI()
 
                 if (j > 0)
                     ImGui::SameLine();
-                if (ImGui::ImageButton(("Unit #" + std::to_string(j) + group->GetName()).c_str(), *texture, {32, 32}))
+                if (ImGui::ImageButton(("Unit #" + std::to_string(j)).c_str(), *texture, {32, 32}))
                     ImGui::OpenPopup(("UnitContextMenu##" + std::to_string(j)).c_str());
                 
                 if (ImGui::BeginPopup(("UnitContextMenu##" + std::to_string(j)).c_str(), ImGuiWindowFlags_NoMove))
@@ -224,6 +241,8 @@ void GroupManager::UpdateUI()
                 selectionManager.ClearSelect();
                 for (auto& unit : group->GetUnits())
                     selectionManager.AddSelect(unit);
+                if (leader)
+                    selectionManager.AddSelect(leader);
             }
 
             ImGui::SameLine();
@@ -277,6 +296,16 @@ void GroupManager::UpdateUI()
     ImGui::End();
 }
 
+unsigned GroupManager::GetNewGroupID()
+{
+    return newGroupID;
+}
+
+void GroupManager::SetNewGroupID(unsigned id)
+{
+    newGroupID = id;
+}
+
 const Group& GroupManager::GetGroup(std::string_view name)
 {
     for (auto* g : groups)
@@ -323,4 +352,55 @@ void GroupManager::RemoveAllGroups()
         delete group;
     }
     groups.clear();
+}
+
+nlohmann::json GroupManager::Serialize()
+{
+    nlohmann::json groupsJson = nlohmann::json::array();
+
+    for (auto& group : groups)
+        groupsJson.push_back(group->Serialize());
+
+    return groupsJson;
+}
+
+void GroupManager::Deserialize(const nlohmann::json& data, std::vector<GameObject*>& objects)
+{
+    for (auto* g : groups)
+        delete g;
+    groups.clear();
+
+    for (const auto& groupJson : data)
+    {
+        Group* group = new Group(groupJson.value("name", ""));
+        
+        if (groupJson.contains("leader_id"))
+        {
+            long id = groupJson.value("leader_id", -1);
+
+            for (auto& obj : objects)
+            {
+                Hero* leader = dynamic_cast<Hero*>(obj);
+            
+                if (leader && leader->GetID() == id)
+                {
+                    leader->SetIsLeader(false);
+                    group->SetLeader(leader);
+                }
+            }
+        }
+
+        for (const long id : groupJson["units"])
+        {
+            for (auto& obj : objects)
+            {
+                Unit* unit = dynamic_cast<Unit*>(obj);
+            
+                if (unit && unit->GetID() == id)
+                    group->AddToGroup(unit);
+            }
+        }
+
+        groups.push_back(group);
+    }
 }

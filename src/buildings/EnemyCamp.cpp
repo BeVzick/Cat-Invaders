@@ -1,6 +1,6 @@
 #include "EnemyCamp.h"
 
-#include "entities/units/Unit.h"
+#include "../entities/units/Unit.h"
 #include <algorithm>
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <imgui.h>
@@ -42,9 +42,14 @@ void AggroEllipse::Rebuild()
     }
 }
 
+EnemyCamp::EnemyCamp(sf::Texture &texture)
+    : EnemyCamp(texture, {250, 250}, 30.f, 180.f, 4)
+{
+}
+
 EnemyCamp::EnemyCamp(sf::Texture &texture, sf::Vector2f pos, float spawn_interval, float aggro_radius, unsigned max_enemies)
     : GameObject(texture), spawnInterval(spawn_interval), aggroRadius(aggro_radius), maxEnemies(max_enemies),
-    aggroShape(aggro_radius, aggro_radius * 0.5f, 64)
+      aggroShape(aggro_radius, aggro_radius * 0.5f, 64)
 {
     SetPos(pos);
     aggroShape.SetPosition(pos);
@@ -159,6 +164,11 @@ void EnemyCamp::CheckAggro(const std::vector<GameObject *> &objects, const std::
 float EnemyCamp::GetAggroRadius() const
 {
     return aggroRadius;
+}
+
+std::string EnemyCamp::GetType() const
+{
+    return "EnemyCamp";
 }
 
 void EnemyCamp::SpawnWave(const std::vector<GameObject *> &worldObjects, std::map<std::string, sf::Texture *> &textures)

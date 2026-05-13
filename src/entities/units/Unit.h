@@ -17,4 +17,6 @@ public:
 protected:
     unsigned trainingTime;
     bool hasGroup;
+
+    std::string GetType() const override;
 };

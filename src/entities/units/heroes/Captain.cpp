@@ -32,3 +32,8 @@ Captain::Captain(sf::Texture &texture)
 Captain::~Captain()
 {
 }
+
+std::string Captain::GetType() const
+{
+    return "Captain";
+}

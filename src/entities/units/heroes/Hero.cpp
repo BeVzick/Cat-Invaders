@@ -47,3 +47,8 @@ void Hero::ActivateSkill(unsigned index)
     if (index < skills.size())
         skills[index]->Activate(*this);
 }
+
+std::string Hero::GetType() const
+{
+    return "Hero";
+}

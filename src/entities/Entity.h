@@ -28,10 +28,15 @@ public:
     float GetSpeed();
     void SetState(EntityState state);
 
+    nlohmann::json Serialize() override;
+    void Deserialize(const nlohmann::json& data) override;
+
 protected:
     std::queue<IAction*> actions;
     EntityState state;
     unsigned damage;
     float attackSpeed;
     float speed;
+
+    std::string GetType() const override;
 };

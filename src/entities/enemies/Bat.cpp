@@ -10,6 +10,9 @@ Bat::Bat(sf::Texture &texture)
     animationComponent->AddAnimation("walk_left", 3, 5, {150, 100, 100, 150, 150});
     animationComponent->AddAnimation("walk_up", 5, 5, {150, 100, 100, 150, 150});
     animationComponent->AddAnimation("walk_right", 7, 5, {150, 100, 100, 150, 150});
+
+    maxHealth = 50;
+    health = maxHealth;
 }
 
 Bat::~Bat()
@@ -45,4 +48,9 @@ void Bat::Update(sf::Vector2f mousePosView, float dt)
         SetPos(GetPos() + sf::Vector2f(-100.f, 0.f) * dt);
     else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Numpad6))
         SetPos(GetPos() + sf::Vector2f(100.f, 0.f) * dt);
+}
+
+std::string Bat::GetType() const
+{
+    return "Bat";
 }

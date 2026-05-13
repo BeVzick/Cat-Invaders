@@ -8,3 +8,8 @@ IronPaw::IronPaw(sf::Texture &texture)
 IronPaw::~IronPaw()
 {
 }
+
+std::string IronPaw::GetType() const
+{
+    return "IronPaw";
+}
