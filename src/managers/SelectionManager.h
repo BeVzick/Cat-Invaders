@@ -4,6 +4,7 @@
 #include "../entities/units/Unit.h"
 #include "../buildings/Building.h"
 #include "../actions/IAction.h"
+#include "../Pointer.h"
 #include <vector>
 #include <set>
 
@@ -23,7 +24,7 @@ public:
     SelectionManager(std::map<std::string, sf::Texture*>& textures, ProfileManager& profile_manager);
     ~SelectionManager();
 
-    void UpdateUI(CursorMode& cursor_mode);
+    void UpdateUI(Pointer& pointer);
 
     void SetSelect(Unit* object);
     void SetSelect(Building* object);
@@ -42,6 +43,6 @@ private:
     std::set<Unit*> selectedUnits;
     Building* selectedBuilding;
 
-    void RenderActionBar(CursorMode& cursor_mode);
+    void RenderActionBar(Pointer& pointer);
     void RenderSkillBar();
 };

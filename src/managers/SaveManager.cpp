@@ -56,6 +56,9 @@ std::vector<SaveSlot> SaveManager::GetSlots()
 
 void SaveManager::DeleteSlot(unsigned index)
 {
+    std::string fullPath = saveDir + '/' + slots[index].GetFilename();
+    if (fs::exists(fullPath))
+        fs::remove(fullPath);
     slots.erase(slots.begin() + index);
 }
 

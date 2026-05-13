@@ -3,12 +3,15 @@
 #include "../entities/units/Unit.h"
 
 DefendAction::DefendAction(sf::Vector2f pos_iso, float defend_radius, float attack_range)
-    : defendPos(pos_iso), defendRadius(defend_radius), attackRange(attack_range)
+    : defendPos(pos_iso), defendRadius(defend_radius), attackRange(attack_range),
+    attackTimer(0.f), done(false), arrivedOnce(false), moveAction(nullptr), 
+    currentThreat(nullptr), worldObjects(nullptr), phase(Phase::MovingToPos)
 {
 }
 
 DefendAction::~DefendAction()
 {
+    delete moveAction;
 }
 
 void DefendAction::Start(Entity &owner)
@@ -53,7 +56,7 @@ void DefendAction::Update(Entity &owner, float dt)
         break;
     case Phase::Attacking:
     {
-        if (currentThreat || currentThreat->GetHealth() == 0)
+        if (!currentThreat || currentThreat->GetHealth() == 0)
         {
             currentThreat = nullptr;
             phase = Phase::Returning;
@@ -92,12 +95,18 @@ void DefendAction::Update(Entity &owner, float dt)
         }
         else
         {
+            if (moveAction)
+            {
+                delete moveAction;
+                moveAction = nullptr;
+            }
+
             owner.SetState(ATTACK);
             attackTimer += dt;
             float interval = (owner.GetAttackSpeed() > 0.f) ? 1.f / owner.GetAttackSpeed() : 1.f;
             if (attackTimer >= interval)
             {
-                attackTimer = 0.f;
+                attackTimer -= interval;
                 currentThreat->TakeDamage(owner.GetDamage());
             }
         }
@@ -129,6 +138,8 @@ bool DefendAction::IsDone() const
 void DefendAction::Cancel()
 {
     done = true;
+    delete moveAction;
+    moveAction = nullptr;   
 }
 
 void DefendAction::SetWorldObjects(const std::vector<GameObject*>* objects)
@@ -149,7 +160,7 @@ GameObject *DefendAction::FindThreat(const Entity &owner) const
         if (dynamic_cast<const Unit*>(obj))
             continue;
         sf::Vector2f d = obj->GetPos() - owner.GetPos();
-        float dsq = d.x * d.x + d.y + d.y;
+        float dsq = d.x * d.x + d.y * d.y;
         if (dsq <= best && obj->GetHealth() > 0)
         {
             best = dsq;

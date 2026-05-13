@@ -11,13 +11,18 @@ MoveToAction::~MoveToAction()
 {
 }
 
-void MoveToAction::Start(Entity &owner)
+void MoveToAction::Start(Entity& owner)
 {
     done = false;
     sf::Vector2f dir = targetPos - owner.GetPos();
     float dist = std::sqrt(dir.x * dir.x + dir.y * dir.y);
     if (dist > arrivalThreshold)
         owner.SetState(DirectionFromAngle(std::atan2(dir.y, dir.x)));
+    else
+    {
+        owner.SetState(DEFAULT);
+        done = true;
+    }
 }
 
 void MoveToAction::Update(Entity &owner, float dt)
@@ -40,7 +45,13 @@ void MoveToAction::Update(Entity &owner, float dt)
     float speed = owner.GetSpeed();
     float step = std::min(speed * dt, dist - arrivalThreshold);
     owner.SetPos(currPos + dir * step);
-    owner.SetState(DirectionFromAngle(std::atan2(dir.y, dir.x)));
+    if (step > 0.1f)
+        owner.SetState(DirectionFromAngle(std::atan2(dir.y, dir.x)));
+    else
+    {
+        owner.SetState(DEFAULT);
+        done = true;
+    }
 }
 
 bool MoveToAction::IsDone() const

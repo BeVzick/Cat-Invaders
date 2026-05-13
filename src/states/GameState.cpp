@@ -39,6 +39,8 @@ GameState::GameState(sf::RenderWindow& window, std::vector<State *>& states, Set
     selectionManager = new SelectionManager(textures, *profileManager);
     groupManager = new GroupManager(textures, *selectionManager, *profileManager);
     saveManager = new SaveManager();
+
+    pointer = new Pointer(*textures["pointers"]);
     
     Captain* c = new Captain(*textures["captain"]);
     c->SetPos({50, 100});
@@ -70,6 +72,8 @@ GameState::~GameState()
     delete selectionManager;
     delete profileManager;
     delete saveManager;
+
+    delete pointer;
 
     delete tilemap;
 
@@ -112,19 +116,6 @@ void GameState::Update(float dt)
 {
     tilemap->Update();
 
-    for (auto* obj : objects)
-    {
-        obj->Update(mousePosView, dt);
-        if (!isPaused)
-            obj->UpdateAnimations(dt);
-    }
-
-    for (auto* camp : enemyCamps)
-    {
-        camp->Update({}, dt);
-        camp->CheckAggro(objects, objects);
-    }  
-    
     if (isSaving)
         RenderSavesManu();
     else if (isPaused)
@@ -136,9 +127,22 @@ void GameState::Update(float dt)
     }
     else
     {
+        for (auto* obj : objects)
+        {
+            obj->Update(mousePosView, dt);
+            if (!isPaused)
+                obj->UpdateAnimations(dt);
+        }
+
+        for (auto* camp : enemyCamps)
+        {
+            camp->Update({}, dt);
+            camp->CheckAggro(objects, objects);
+        }
+
         resourceManager->UpdateUI();
         researchManager->UpdateUI();
-        selectionManager->UpdateUI(cursorMode);
+        selectionManager->UpdateUI(*pointer);
         groupManager->UpdateUI();
         profileManager->Show();
 
@@ -162,12 +166,47 @@ void GameState::Update(float dt)
                 sf::Vector2f targetPos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view);
                 bool isShiftPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift);
 
-                for (auto& unit : selectionManager->GetSelected())
-                    unit->IssueCommand(new MoveToAction(targetPos), isShiftPressed);
+                const auto& selectedUnits = selectionManager->GetSelected();
+                int numUnits = selectedUnits.size();
+
+                if (numUnits > 0)
+                {
+                    int cols = static_cast<int>(std::ceil(std::sqrt(numUnits)));
+                    // float rows = std::ceil((float)numUnits / cols); // Рядки рахувати не обов'язково для логіки
+
+                    float spacing = 16.f; 
+
+                    float offsetX = ((cols - 1) * spacing) / 2.f;
+                    float offsetY = ((std::ceil((float)numUnits / cols) - 1) * spacing) / 2.f;
+
+                    sf::Vector2f startPos = { targetPos.x - offsetX, targetPos.y - offsetY };
+
+                    int i = 0;
+                    for (auto& unit : selectedUnits)
+                    {
+                        int row = i / cols;
+                        int col = i % cols;
+
+                        sf::Vector2f unitTargetPos(
+                            startPos.x + col * spacing,
+                            startPos.y + row * spacing
+                        );
+
+                        unit->IssueCommand(new MoveToAction(unitTargetPos), isShiftPressed);
+                        i++;
+                    }
+                }
             }
         }
 
         sf::Vector2f mousePosView = window.mapPixelToCoords(mousePosWindow, view);
+
+        pointer->Update(mousePosView, dt);
+        if (isMouseOverUI || pointer->GetState() == PointerState::None)
+            window.setMouseCursorVisible(true);
+        else
+            window.setMouseCursorVisible(false);
+
         if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && !isMouseOverUI)
         {
             if (!selectRect.GetStartedSelection())
@@ -211,6 +250,9 @@ void GameState::Render()
     if (selectRect.GetStartedSelection())
         selectRect.Render(window);
 
+    if (pointer->GetState() != PointerState::None)
+        pointer->Render(window);
+
     // Debug
     window.setView(window.getDefaultView());
     if (settings.showFPS)
@@ -227,6 +269,9 @@ void GameState::LoadTextures()
     auto load = [&](const std::string& key, const std::string& path) {
         textures[key] = new sf::Texture(path);
     };
+
+    load("pointers", "res/pointers.png");
+
     load("tile", "res/tiles/test_tile.png");
     load("grass", "res/tiles/grass.png");
     

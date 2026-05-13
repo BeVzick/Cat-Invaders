@@ -16,8 +16,11 @@ SelectionManager::~SelectionManager()
 {
 }
 
-void SelectionManager::UpdateUI(CursorMode& cursor_mode)
+void SelectionManager::UpdateUI(Pointer& pointer)
 {
+    if (selectedUnits.empty() && pointer.GetState() != PointerState::None)
+        pointer.SetState(PointerState::None);
+
     ImGui::Begin("Selected Units");
     ClampImGuiWindow();
 
@@ -71,7 +74,7 @@ void SelectionManager::UpdateUI(CursorMode& cursor_mode)
     ImGui::SameLine();
     ImGui::BeginChild("Actions", {width * 0.45f, 96});
     if (!selectedUnits.empty())
-        RenderActionBar(cursor_mode);
+        RenderActionBar(pointer);
     ImGui::EndChild();
 
     if (selectedUnits.size() == 1)
@@ -136,14 +139,15 @@ std::set<Unit *>& SelectionManager::GetSelected()
     return selectedUnits;
 }
 
-void SelectionManager::RenderActionBar(CursorMode& cursor_mode)
+void SelectionManager::RenderActionBar(Pointer& pointer)
 {
-    auto modeBtn = [&](const char* label, CursorMode mode, const char* tooltip) {
-        bool active = (cursor_mode == mode);
+    PointerState pointer_state = pointer.GetState();
+    auto modeBtn = [&](const char* label, PointerState state, const char* tooltip) {
+        bool active = (pointer_state == state);
         if (active)
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.3f, 1.f));
         if (ImGui::Button(label, {52, 40}))
-            cursor_mode = (cursor_mode == mode) ? CursorMode::Normal : mode;
+            pointer.SetState((pointer_state == state) ? PointerState::None : state);
         if (active)
             ImGui::PopStyleColor();
         if (ImGui::IsItemHovered())
@@ -151,20 +155,20 @@ void SelectionManager::RenderActionBar(CursorMode& cursor_mode)
     };
 
     ImGui::SeparatorText("Actions");
-    modeBtn("Move", CursorMode::Move, "Right-click to move (M)");
+    modeBtn("Move", PointerState::Move, "Right-click to move (M)");
     ImGui::SameLine();
-    modeBtn("Attack", CursorMode::Attack, "Right-click to attack (A)");
+    modeBtn("Attack", PointerState::Attack, "Right-click to attack (A)");
     ImGui::SameLine();
-    modeBtn("Defend", CursorMode::Defend, "Right-click to defend position (D)");
+    modeBtn("Defend", PointerState::Defend, "Right-click to defend position (D)");
 
     bool hasEngineer = std::any_of(selectedUnits.begin(), selectedUnits.end(),
         [](Unit* u) { return dynamic_cast<Engineer*>(u) != nullptr; }
     );
     if (hasEngineer)
     {
-        modeBtn("Gather", CursorMode::Gather, "Right-click resource node to gather");
-        ImGui::SameLine();
-        modeBtn("Build", CursorMode::Build, "Open build menu (B)");
+        // modeBtn("Gather", PointerState::Gather, "Right-click resource node to gather");
+        // ImGui::SameLine();
+        modeBtn("Build", PointerState::Build, "Open build menu (B)");
     }
 }
 

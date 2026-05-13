@@ -43,7 +43,10 @@ void Entity::Update(sf::Vector2f mouse_pos_view, float dt)
                 actions.front()->Start(*this);
         }
     }
-    // else - if doesn't hava an action
+    else
+    {
+        state = DEFAULT;
+    }
 }
 
 void Entity::IssueCommand(IAction *action, bool shift_queue)
@@ -57,12 +60,16 @@ void Entity::IssueCommand(IAction *action, bool shift_queue)
             delete current;
             actions.pop();
         }
-    }
 
-    actions.push(action);
-
-    if (actions.size() == 1)
+        actions.push(action);
         actions.front()->Start(*this);
+    }
+    else
+    {
+        actions.push(action);
+        if (actions.size() == 1)
+            actions.front()->Start(*this);
+    }
 }
 
 EntityState Entity::GetState()

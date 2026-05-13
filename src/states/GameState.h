@@ -6,6 +6,7 @@
 #include "../entities/units/Unit.h"
 #include "../tilemap/TileMap.h"
 #include "../SelectRect.h"
+#include "../Pointer.h"
 #include <string>
 #include <map>
 #include <imgui.h>
@@ -43,7 +44,7 @@ private:
     std::vector<GameObject*> objects;
     std::vector<EnemyCamp*> enemyCamps;
 
-    CursorMode cursorMode;
+    Pointer* pointer;
 
     bool isPaused;
     bool isSaving;

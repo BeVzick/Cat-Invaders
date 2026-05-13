@@ -3,7 +3,8 @@
 #include "../entities/Entity.h"
 
 AttackAction::AttackAction(GameObject &target, float attack_range, float chase_threshold)
-    : target(target), attackRange(attack_range), chaseThreshold(chase_threshold)
+    : target(target), attackRange(attack_range), chaseThreshold(chase_threshold), 
+      attackTimer(0.f), done(false), moveAction(nullptr)
 {
 }
 
@@ -36,11 +37,12 @@ void AttackAction::Update(Entity& owner, float dt)
     if (!InRange(owner))
     {
         owner.SetState(DEFAULT);
-        // if (!moveAction)
-        //     moveAction = new MoveToAction(target.GetPos(), attackRange * 0.9f);
+        if (!moveAction)
+        {
+            moveAction = new MoveToAction(target.GetPos(), attackRange * 0.9f);
+            moveAction->Start(owner);
+        }
 
-        moveAction = new MoveToAction(target.GetPos(), attackRange * 0.9f);
-        moveAction->Start(owner);
         moveAction->Update(owner, dt);
 
         if (moveAction->IsDone())
@@ -51,16 +53,20 @@ void AttackAction::Update(Entity& owner, float dt)
         return;
     }
 
-    delete moveAction;
-    moveAction = nullptr;
-    owner.SetState(ATTACK);
+    if (moveAction)
+    {
+        delete moveAction;
+        moveAction = nullptr;
+    }
 
+    owner.SetState(ATTACK);
     attackTimer += dt;
+    
     float interval = (owner.GetAttackSpeed() > 0.f) ? 1.f / owner.GetAttackSpeed() : 1.f;
 
     if (attackTimer >= interval)
     {
-        attackTimer = 0.f;
+        attackTimer -= interval;
         target.TakeDamage(owner.GetDamage());
     }
 }
