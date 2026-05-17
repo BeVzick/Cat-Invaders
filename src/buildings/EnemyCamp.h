@@ -5,6 +5,8 @@
 #include <vector>
 #include <SFML/Graphics/CircleShape.hpp>
 
+class EnemyAICoordinator;
+
 struct WaveEntry
 {
     EnemyType type;
@@ -51,6 +53,8 @@ public:
     float GetAggroRadius() const;
 
     const std::vector<Enemy*>& GetSpawnedEnemies();
+    void SetPlayerBasePos(sf::Vector2f pos);
+    void SetAssaultInterval(float seconds);
 
     nlohmann::json Serialize() override;
     void Deserialize(const nlohmann::json& data) override;
@@ -59,6 +63,8 @@ protected:
     std::string GetType() const override;
 
 private:
+    EnemyAICoordinator* aiCoordinator = nullptr;
+    sf::Vector2f playerBasePos;
     std::vector<GameObject *>& worldObjects;
     std::map<std::string, sf::Texture *>& textures;
     std::vector<WaveEntry> waveEntries;

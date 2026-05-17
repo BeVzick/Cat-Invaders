@@ -2,6 +2,7 @@
 
 #include "../entities/units/Unit.h"
 #include "../entities/enemies/Bat.h"
+#include "../EnemyAICoordinator.h"
 #include <algorithm>
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <imgui.h>
@@ -57,10 +58,15 @@ EnemyCamp::EnemyCamp(sf::Texture &texture, sf::Vector2f pos, float spawn_interva
     aggroShape.SetPosition(pos);
     maxHealth = 300;
     health = maxHealth;
+
+    aiCoordinator = new EnemyAICoordinator(*this);
+    aiCoordinator->SetRallyThreshold(3);
+    aiCoordinator->SetAssaultInterval(60.f);
 }
 
 EnemyCamp::~EnemyCamp()
 {
+    delete aiCoordinator;
     for (auto* e : spawnedEnemies)
         delete e;
 }
@@ -79,11 +85,10 @@ void EnemyCamp::Update(sf::Vector2f mouse_pos_view, float dt)
         spawnedEnemies.end()
     );
 
+    aiCoordinator->Update(dt, worldObjects, playerBasePos);
+
     for (auto* e : spawnedEnemies)
-    {
-        e->Update({}, dt);
         e->UpdateAnimations(dt);
-    }
 
     spawnTimer += dt;
     if (spawnTimer >= spawnInterval && spawnedEnemies.size() < maxEnemies)
@@ -183,6 +188,16 @@ const std::vector<Enemy *> &EnemyCamp::GetSpawnedEnemies()
     return spawnedEnemies;
 }
 
+void EnemyCamp::SetPlayerBasePos(sf::Vector2f pos)
+{
+    playerBasePos = pos;
+    aiCoordinator->Update(0.f, worldObjects, playerBasePos);
+}
+
+void EnemyCamp::SetAssaultInterval(float seconds)
+{
+}
+
 nlohmann::json EnemyCamp::Serialize()
 {
     nlohmann::json enemyCamp = GameObject::Serialize();
@@ -257,12 +272,8 @@ void EnemyCamp::SpawnWave()
                 float offsetY = (rand() % 100 - 50) * 0.5f;
                 newEnemy->SetPos({campPos.x + offsetX, campPos.y + offsetY});
 
-                if (aggroed)
-                {
-                    // newEnemy->InitAI(worldObjects, campPos); // Розкоментуй, якщо метод готовий
-                }
-
                 spawnedEnemies.push_back(newEnemy);
+                aiCoordinator->RegisterEnemy(newEnemy);
             }
         }
     }

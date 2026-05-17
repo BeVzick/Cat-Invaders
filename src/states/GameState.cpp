@@ -136,6 +136,7 @@ void GameState::Update(float dt)
 
         for (auto* camp : enemyCamps)
         {
+            // camp->SetPlayerBasePos(commandCenterPos);
             camp->Update({}, dt);
             camp->CheckAggro(objects, objects);
         }
