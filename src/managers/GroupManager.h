@@ -4,9 +4,8 @@
 #include "ProfileManager.h"
 #include "../entities/units/heroes/Hero.h"
 #include <set>
-#include <nlohmann/json.hpp>
 
-class Group
+class Group : public ISerializable
 {
 public:
     Group(std::string name, Hero* leader = nullptr);
@@ -22,7 +21,8 @@ public:
     void AddToGroup(Unit* unit);
     void RemoveFropGroup(Unit* unit);
 
-    nlohmann::json Serialize();
+    nlohmann::json Serialize() override;
+    void Deserialize(const nlohmann::json& data) override;
 
 private:
     std::string name;
@@ -30,7 +30,7 @@ private:
     std::set<Unit*> units;
 };
 
-class GroupManager
+class GroupManager : public ISerializable
 {
     friend Group;
 public:
@@ -48,7 +48,8 @@ public:
     void RemoveGroup(unsigned index);
     void RemoveAllGroups();
 
-    nlohmann::json Serialize();
+    nlohmann::json Serialize() override;
+    void Deserialize(const nlohmann::json& data);
     void Deserialize(const nlohmann::json& data, std::vector<GameObject*>& objects);
 
 private:

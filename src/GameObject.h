@@ -1,11 +1,12 @@
 #pragma once
 
 #include "utills/AnimationComponent.h"
-#include <nlohmann/json.hpp>
+#include "ISerializable.h"
+#include <SFML/Graphics/RectangleShape.hpp>
 
 class ProfileManager;
 
-class GameObject
+class GameObject: public ISerializable
 {
     friend ProfileManager;
 public:
@@ -19,6 +20,7 @@ public:
 
     static void InitNewID(unsigned long new_id);
 
+    const sf::Sprite& GetSprite() const;
     unsigned long GetID() const;
     sf::Vector2f GetPos() const;
     unsigned GetHealth() const;
@@ -29,8 +31,8 @@ public:
 
     void TakeDamage(unsigned damage);
 
-    virtual nlohmann::json Serialize();
-    virtual void Deserialize(const nlohmann::json& data);
+    nlohmann::json Serialize() override;
+    void Deserialize(const nlohmann::json& data) override;
 
 protected:
     AnimationComponent* animationComponent;
@@ -44,6 +46,8 @@ protected:
 private:
     sf::Sprite sprite;
     sf::Vector2f pos;
+    sf::RectangleShape healthShape;
+    sf::RectangleShape bgHealthShape;
 
     static unsigned long newID;
 };

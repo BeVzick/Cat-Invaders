@@ -15,6 +15,7 @@ public:
 
     bool SaveGame(unsigned index, const nlohmann::json& game_state_data);
     void LoadGame(unsigned index, GameState& state);
+    void LoadLastGame(GameState& state);
     void NewSlot(const std::string& name);
     std::vector<SaveSlot> GetSlots();
     void DeleteSlot(unsigned index);
@@ -24,8 +25,9 @@ public:
 private:
     std::vector<SaveSlot> slots;
     std::string saveDir;
+    long lastSaveSlotID = -1;
 
-    static unsigned newID;
+    static unsigned long newID;
 
     std::string GetCurrentDateTime();
 };

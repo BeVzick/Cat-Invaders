@@ -4,6 +4,7 @@
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/Graphics/Rect.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
+#include <nlohmann/json.hpp>
 
 class Tile
 {

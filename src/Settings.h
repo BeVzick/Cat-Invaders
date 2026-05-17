@@ -1,10 +1,11 @@
 #pragma once
 
+#include "ISerializable.h"
 #include <vector>
 #include <string>
 #include <SFML/Window/VideoMode.hpp>
 
-struct Settings {
+struct Settings : public ISerializable {
     // General
     bool showFPS = false;
     std::vector<std::string> availableLanguages = {"English"};
@@ -16,11 +17,14 @@ struct Settings {
     std::vector<unsigned> availableFramerateLimits = {144, 120, 60, 30};
     unsigned framerateLimit = 120;
     bool verticalSync = false;
-    bool fullscreen = true;
+    bool fullscreen = false;
     std::vector<unsigned> availableAntiAliasingLevels = {8, 4, 2, 0};
     unsigned antiAliasingLevel = 8;
 
     // Audio
-    int masterVolume = 25;
-    int musicVolume = 100;
+    int masterVolume = 50;
+    int musicVolume = 10;
+
+    nlohmann::json Serialize();
+    void Deserialize(const nlohmann::json& data);
 };

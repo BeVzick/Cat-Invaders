@@ -1,5 +1,6 @@
 #include "SettingsState.h"
 
+#include <fstream>
 #include <imgui-SFML.h>
 
 SettingsState::SettingsState(sf::RenderWindow& window, std::vector<State *>& states, Settings& settings)
@@ -9,6 +10,15 @@ SettingsState::SettingsState(sf::RenderWindow& window, std::vector<State *>& sta
 
 SettingsState::~SettingsState()
 {
+    nlohmann::json settingsJson = settings.Serialize();
+
+    if (!std::filesystem::exists("conf/"))
+        std::filesystem::create_directory("conf");
+
+    std::ofstream file("conf/settings.json");
+    if (file.is_open())
+        file << settingsJson.dump(4);
+    file.close();
 }
 
 void SettingsState::Update(float dt)

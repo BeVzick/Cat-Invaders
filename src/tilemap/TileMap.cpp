@@ -12,8 +12,9 @@ TileMap::TileMap(sf::Vector3u size)
 }
 
 TileMap::~TileMap()
-{for (auto& x : tiles)
-        for (auto& y: x)
+{
+    for (auto& x : tiles)
+        for (auto& y : x)
             for (auto& z : y)
                 delete z;
 }
@@ -21,7 +22,7 @@ TileMap::~TileMap()
 void TileMap::Update()
 {
     for (auto& x : tiles)
-        for (auto& y: x)
+        for (auto& y : x)
             for (auto& z : y)
                 if (z != nullptr)
                     z->Update();
@@ -30,7 +31,7 @@ void TileMap::Update()
 void TileMap::Render(sf::RenderTarget &target)
 {
     for (auto& x : tiles)
-        for (auto& y: x)
+        for (auto& y : x)
             for (auto& z : y)
                 if (z != nullptr)
                     z->Render(target);

@@ -29,7 +29,11 @@ void MainWindowState::Update(float dt)
         PushState(new GameState(window, states, settings));
 
     if (ImGui::Button("Continue", {250, 50}))
-        PushState(new GameState(window, states, settings));
+    {
+        GameState* state = new GameState(window, states, settings);
+        state->LoadLastGame();
+        PushState(state);
+    }
 
     if (ImGui::Button("Settings", {250, 50}))
         PushState(new SettingsState(window, states, settings));

@@ -27,7 +27,7 @@ void AttackAction::Update(Entity& owner, float dt)
 
     float dist = DistanceTo(owner);
 
-    if (target.GetHealth() == 0 || dist > chaseThreshold)
+    if (target.GetHealth() == 0 || (chaseThreshold > 0 && dist > chaseThreshold))
     {
         owner.SetState(DEFAULT);
         done = true;

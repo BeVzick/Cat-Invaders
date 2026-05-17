@@ -6,10 +6,19 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <imgui-SFML.h>
-#include <iostream>
+#include <fstream>
 
 Game::Game()
 {
+    std::ifstream file("conf/settings.json");
+    if (file.is_open())
+    {
+        nlohmann::json data;
+        file >> data;
+        settings.Deserialize(data);
+    }
+    file.close();
+
     std::vector<sf::VideoMode> videoModes = sf::VideoMode::getFullscreenModes();
     std::sort(videoModes.begin(), videoModes.end(), 
         [](const auto& a, const auto& b) {

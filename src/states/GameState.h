@@ -11,7 +11,7 @@
 #include <map>
 #include <imgui.h>
 
-class GameState : public State
+class GameState : public State, public ISerializable
 {
 public:
     GameState(sf::RenderWindow& window, std::vector<State*>& states, Settings& settings);
@@ -21,10 +21,12 @@ public:
     void Update(float dt) override;
     void Render() override;
 
+    void LoadLastGame();
+
     void OnResize() override;
     
-    nlohmann::json Serialize();
-    void Deserialize(const nlohmann::json& data);
+    nlohmann::json Serialize() override;
+    void Deserialize(const nlohmann::json& data) override;
 
 private:
     ResourceManager* resourceManager;
@@ -43,6 +45,7 @@ private:
     TileMap* tilemap;
     std::vector<GameObject*> objects;
     std::vector<EnemyCamp*> enemyCamps;
+    GameObject* selectedEnemy = nullptr;
 
     Pointer* pointer;
 

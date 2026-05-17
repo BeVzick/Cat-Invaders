@@ -9,7 +9,7 @@
 
 namespace fs = std::filesystem;
 
-unsigned SaveManager::newID = 0;
+unsigned long SaveManager::newID = 0;
 
 SaveManager::SaveManager(const std::string& saveDir)
     : saveDir(saveDir)
@@ -23,9 +23,13 @@ SaveManager::SaveManager(const std::string& saveDir)
         file >> save;
     file.close();
 
+    newID = save.value("new_id", 0);
+    lastSaveSlotID = save.value("last_save_id", -1);
+
     for (const auto& slotJson : save["slots"])
     {
         SaveSlot slot = SaveSlot(
+            slotJson.value("id", 0),
             slotJson.value("name", ""),
             slotJson.value("filename", ""),
             slotJson.value("datetime", ""),
@@ -38,6 +42,8 @@ SaveManager::SaveManager(const std::string& saveDir)
 SaveManager::~SaveManager()
 {
     nlohmann::json save;
+    save["new_id"] = newID;
+    save["last_save_id"] = lastSaveSlotID;
     save["slots"] = nlohmann::json::array();
 
     for (auto& slot : slots)
@@ -65,6 +71,8 @@ void SaveManager::DeleteSlot(unsigned index)
 bool SaveManager::SaveGame(unsigned index, const nlohmann::json& game_state_data)
 {
     std::string fullPath = saveDir + '/' + slots[index].GetFilename();
+    lastSaveSlotID = slots[index].GetID();
+    slots[index].SetDatetime(GetCurrentDateTime());
     std::ofstream file(fullPath);
     if (file.is_open())
     {
@@ -93,10 +101,37 @@ void SaveManager::LoadGame(unsigned index, GameState& state)
     }
 }
 
+void SaveManager::LoadLastGame(GameState &state)
+{
+    SaveSlot* slot = nullptr;
+    for (auto& s : slots)
+        if (s.GetID() == lastSaveSlotID)
+            slot = &s;
+
+    if (!slot)
+        return;
+
+    std::string fullPath = saveDir + '/' + slot->GetFilename();
+    std::ifstream file(fullPath);
+    nlohmann::json save;
+    if (file.is_open())
+    {
+        try
+        {
+            file >> save;
+            state.Deserialize(save);
+        }
+        catch (nlohmann::json::parse_error& e)
+        {
+            std::cerr << "Parsing json error: " << e.what() << '\n';
+        }
+    }
+}
+
 void SaveManager::NewSlot(const std::string &name)
 {
     std::string datetime = GetCurrentDateTime();
-    SaveSlot slot = SaveSlot(name, name + '_' + datetime, datetime, 0);
+    SaveSlot slot = SaveSlot(newID++, name, name + '_' + datetime, datetime, 0);
     slots.push_back(slot);
 }
 

@@ -79,6 +79,10 @@ nlohmann::json Group::Serialize()
     return group;
 }
 
+void Group::Deserialize(const nlohmann::json &data)
+{
+}
+
 unsigned GroupManager::newGroupID = 0;
 
 GroupManager::GroupManager(std::map<std::string, sf::Texture*>& textures, SelectionManager& selection_manager, ProfileManager& profile_manager)
@@ -362,6 +366,10 @@ nlohmann::json GroupManager::Serialize()
         groupsJson.push_back(group->Serialize());
 
     return groupsJson;
+}
+
+void GroupManager::Deserialize(const nlohmann::json &data)
+{
 }
 
 void GroupManager::Deserialize(const nlohmann::json& data, std::vector<GameObject*>& objects)

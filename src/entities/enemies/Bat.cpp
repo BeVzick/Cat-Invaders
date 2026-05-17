@@ -6,10 +6,14 @@ Bat::Bat(sf::Texture &texture)
     : Enemy(texture, {48, 32})
 {
     animationComponent->AddAnimation("default", 0, 5, {200, 150, 150, 200, 200});
-    animationComponent->AddAnimation("walk_down", 1, 5, {150, 100, 100, 150, 150});
-    animationComponent->AddAnimation("walk_left", 3, 5, {150, 100, 100, 150, 150});
-    animationComponent->AddAnimation("walk_up", 5, 5, {150, 100, 100, 150, 150});
-    animationComponent->AddAnimation("walk_right", 7, 5, {150, 100, 100, 150, 150});
+    animationComponent->AddAnimation("default-selected", 1, 5, {200, 150, 150, 200, 200});
+    animationComponent->AddAnimation("walk_down", 0, 5, {150, 100, 100, 150, 150});
+    animationComponent->AddAnimation("walk_down-selected", 1, 5, {150, 100, 100, 150, 150});
+    animationComponent->AddAnimation("walk_left", 4, 5, {150, 100, 100, 150, 150});
+    animationComponent->AddAnimation("walk_left-selected", 5, 5, {150, 100, 100, 150, 150});
+    animationComponent->AddAnimation("walk_up", 8, 5, {150, 100, 100, 150, 150});
+    animationComponent->AddAnimation("walk_up-selected", 9, 5, {150, 100, 100, 150, 150});
+    animationComponent->AddAnimation("walk_right-selected", 12, 5, {150, 100, 100, 150, 150});
 
     maxHealth = 50;
     health = maxHealth;
@@ -23,16 +27,21 @@ void Bat::UpdateAnimations(float dt)
 {
     if (animationComponent)
     {
+        std::string animation = "default";
+
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Numpad2))
-            animationComponent->Play("walk_down", dt);
+            animation = "walk_down";
         else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Numpad8))
-            animationComponent->Play("walk_up", dt);
+            animation = "walk_up";
         else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Numpad4))
-            animationComponent->Play("walk_left", dt);
+            animation = "walk_left";
         else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Numpad6))
-            animationComponent->Play("walk_right", dt);
-        else
-            animationComponent->Play("default", dt);
+            animation = "walk_right";
+
+        if (isSelected)
+            animation.append("-selected");
+
+            animationComponent->Play(animation, dt);
     }
 }
 

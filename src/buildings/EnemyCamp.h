@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../entities/enemies/Enemy.h"
+#include "../ISerializable.h"
 #include <vector>
 #include <SFML/Graphics/CircleShape.hpp>
 
@@ -29,11 +30,12 @@ private:
     void Rebuild();
 };
 
-class EnemyCamp : public GameObject
+class EnemyCamp : public GameObject, public ISerializable
 {
 public:
-    EnemyCamp(sf::Texture& texture);
-    EnemyCamp(sf::Texture& texture, sf::Vector2f pos, float spawn_interval, float aggro_radius, unsigned max_enemies);
+    EnemyCamp(sf::Texture& texture, std::vector<GameObject *>& worldObjects, std::map<std::string, sf::Texture *>& textures);
+    EnemyCamp(sf::Texture& texture, sf::Vector2f pos, float spawn_interval, float aggro_radius, unsigned max_enemies,
+        std::vector<GameObject *>& worldObjects, std::map<std::string, sf::Texture *>& textures);
     ~EnemyCamp();
 
     void UpdateAnimations(float dt) override {}
@@ -48,10 +50,17 @@ public:
     void CheckAggro(const std::vector<GameObject*>& objects, const std::vector<GameObject*>& worldObjects);
     float GetAggroRadius() const;
 
+    const std::vector<Enemy*>& GetSpawnedEnemies();
+
+    nlohmann::json Serialize() override;
+    void Deserialize(const nlohmann::json& data) override;
+
 protected:
     std::string GetType() const override;
 
 private:
+    std::vector<GameObject *>& worldObjects;
+    std::map<std::string, sf::Texture *>& textures;
     std::vector<WaveEntry> waveEntries;
     std::vector<Enemy*> spawnedEnemies;
     float spawnInterval;
@@ -62,5 +71,5 @@ private:
     bool destroyed;
     AggroEllipse aggroShape;
 
-    void SpawnWave(const std::vector<GameObject*>& worldObjects, std::map<std::string, sf::Texture*>& textures);
+    void SpawnWave();
 };

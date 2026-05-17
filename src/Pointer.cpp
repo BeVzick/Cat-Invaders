@@ -5,10 +5,10 @@ Pointer::Pointer(sf::Texture &texture)
 {
     animationComponent = new AnimationComponent(sprite, {32, 32});
 
-    animationComponent->AddAnimation("move_to", 0, 8, 150);
-    animationComponent->AddAnimation("attack", 1, 8, 150);
-    animationComponent->AddAnimation("defend", 2, 8, 150);
-    animationComponent->AddAnimation("build", 3, 8, 150);
+    animationComponent->AddAnimation("move_to", 0, 8, 100);
+    animationComponent->AddAnimation("attack", 1, 8, 100);
+    animationComponent->AddAnimation("defend", 2, 8, 100);
+    animationComponent->AddAnimation("build", 3, 8, 100);
 
     sprite.setOrigin({32 * 0.5f, 32 * 0.5f});
 }

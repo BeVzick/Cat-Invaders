@@ -14,6 +14,12 @@ GameObject::GameObject(sf::Texture& texture, sf::Vector2i frame_size, sf::Vector
 
     sprite.setOrigin({frame_size.x * 0.5f, frame_size.y * 0.5f});
     sprite.setPosition(pos);
+
+    healthShape.setOrigin({9, 0});
+    bgHealthShape.setOrigin({9, 0});
+    bgHealthShape.setFillColor(sf::Color::Black);
+    bgHealthShape.setPosition({sprite.getPosition().x, sprite.getPosition().y + sprite.getTextureRect().size.y / 2.f});
+    bgHealthShape.setSize({18, 1});
 }
 
 GameObject::~GameObject()
@@ -28,16 +34,29 @@ void GameObject::ShowData()
 
 void GameObject::Update(sf::Vector2f mouse_pos_view, float dt)
 {
+    sf::Color healthColor = (health >= maxHealth * 0.75f) ? sf::Color::Green : (health >= maxHealth * 0.35f) ? sf::Color::Yellow : sf::Color::Red;
+    healthShape.setFillColor(healthColor);
+    healthShape.setSize({18 * ((float) health / maxHealth), 1});
+    sf::Vector2f newPos = {sprite.getPosition().x, sprite.getPosition().y + sprite.getTextureRect().size.y / 2.f};
+    healthShape.setPosition(newPos);
+    bgHealthShape.setPosition(newPos);
 }
 
 void GameObject::Render(sf::RenderTarget& target)
 {
     target.draw(sprite);
+    target.draw(bgHealthShape);
+    target.draw(healthShape);
 }
 
 void GameObject::InitNewID(unsigned long new_id)
 {
     newID = new_id;
+}
+
+const sf::Sprite &GameObject::GetSprite() const
+{
+    return sprite;
 }
 
 unsigned long GameObject::GetID() const

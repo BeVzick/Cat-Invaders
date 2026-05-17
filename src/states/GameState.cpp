@@ -6,6 +6,8 @@
 #include "../entities/enemies/Bat.h"
 #include "../utills/CoordinatesConverter.h"
 #include "../actions/MoveToAction.h"
+#include "../actions/AttackAction.h"
+#include "../actions/DefendAction.h"
 #include "../utills/CameraBounds.h"
 #include <random>
 #include <imgui.h>
@@ -51,11 +53,9 @@ GameState::GameState(sf::RenderWindow& window, std::vector<State *>& states, Set
     e->SetPos({100, 50});
     objects.push_back(e);
 
-    EnemyCamp* camp = new EnemyCamp(*textures["tile"], {400, 300}, 30.f, 180.f, 4);
+    EnemyCamp* camp = new EnemyCamp(*textures["tile"], objects, textures);
     camp->AddWaveEntry(EnemyType::Bat, 2);
     enemyCamps.push_back(camp);
-
-    objects.push_back(new Bat(*textures["bat"]));
 
     fpsText.setCharacterSize(18);
     fpsText.setPosition({10.f, 10.f});
@@ -161,40 +161,146 @@ void GameState::Update(float dt)
 
             CameraBounds::Clamp(view);
 
+            if (pointer->GetState() == PointerState::None && sf::Mouse::isButtonPressed(sf::Mouse::Button::Right))
+            {
+                sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view);
+
+                for (auto& obj : objects)
+                {
+                    if (obj->GetSprite().getGlobalBounds().contains(mousePos))
+                    {
+                        Unit* unit = dynamic_cast<Unit*>(obj);
+                        if (unit)
+                            selectionManager->SetSelect(unit);
+                    }
+                }
+            }
+            else if (pointer->GetState() == PointerState::Attack)
+            {
+                sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view);
+
+                selectedEnemy = nullptr;
+                for (auto& eC : enemyCamps)
+                {
+                    eC->SetIsSelected(false);
+                    for (auto& e : eC->GetSpawnedEnemies())
+                    {
+                        e->SetIsSelected(false);
+                    }
+                }
+
+                for (auto& eC : enemyCamps)
+                {
+                    for (auto& e : eC->GetSpawnedEnemies())
+                    {
+                        if (e->GetSprite().getGlobalBounds().contains(mousePos))
+                        {
+                            selectedEnemy = e;
+                            break;
+                        }
+                    }
+
+                    if (!selectedEnemy && eC->GetSprite().getGlobalBounds().contains(mousePos))
+                        selectedEnemy = eC;
+
+                    if (selectedEnemy)
+                        break;
+                }
+
+                if (selectedEnemy)
+                    selectedEnemy->SetIsSelected(true);
+            }
             if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right))
             {
-                sf::Vector2f targetPos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view);
-                bool isShiftPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift);
-
-                const auto& selectedUnits = selectionManager->GetSelected();
-                int numUnits = selectedUnits.size();
-
-                if (numUnits > 0)
+                switch (pointer->GetState())
                 {
-                    int cols = static_cast<int>(std::ceil(std::sqrt(numUnits)));
-                    // float rows = std::ceil((float)numUnits / cols); // Рядки рахувати не обов'язково для логіки
+                case PointerState::Move:
+                {
+                    sf::Vector2f targetPos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view);
+                    bool isShiftPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift);
 
-                    float spacing = 16.f; 
+                    const auto& selectedUnits = selectionManager->GetSelected();
+                    int numUnits = selectedUnits.size();
 
-                    float offsetX = ((cols - 1) * spacing) / 2.f;
-                    float offsetY = ((std::ceil((float)numUnits / cols) - 1) * spacing) / 2.f;
-
-                    sf::Vector2f startPos = { targetPos.x - offsetX, targetPos.y - offsetY };
-
-                    int i = 0;
-                    for (auto& unit : selectedUnits)
+                    if (numUnits > 0)
                     {
-                        int row = i / cols;
-                        int col = i % cols;
+                        int cols = static_cast<int>(std::ceil(std::sqrt(numUnits)));
+                        // float rows = std::ceil((float)numUnits / cols); // Рядки рахувати не обов'язково для логіки
 
-                        sf::Vector2f unitTargetPos(
-                            startPos.x + col * spacing,
-                            startPos.y + row * spacing
-                        );
+                        float spacing = 16.f; 
 
-                        unit->IssueCommand(new MoveToAction(unitTargetPos), isShiftPressed);
-                        i++;
+                        float offsetX = ((cols - 1) * spacing) / 2.f;
+                        float offsetY = ((std::ceil((float)numUnits / cols) - 1) * spacing) / 2.f;
+
+                        sf::Vector2f startPos = { targetPos.x - offsetX, targetPos.y - offsetY };
+
+                        int i = 0;
+                        for (auto& unit : selectedUnits)
+                        {
+                            int row = i / cols;
+                            int col = i % cols;
+
+                            sf::Vector2f unitTargetPos(
+                                startPos.x + col * spacing,
+                                startPos.y + row * spacing
+                            );
+
+                            unit->IssueCommand(new MoveToAction(unitTargetPos), isShiftPressed);
+                            i++;
+                        }
                     }
+                    break;
+                }
+                case PointerState::Attack:
+                {
+                    if (selectedEnemy)
+                    {
+                        bool isShiftPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift);
+                        const auto& selectedUnits = selectionManager->GetSelected();
+                        for (auto& unit : selectedUnits)
+                            unit->IssueCommand(new AttackAction(*selectedEnemy, 28.f, -1), isShiftPressed);
+                    }
+                    break;
+                }
+                case PointerState::Defend:
+                {
+                    sf::Vector2f targetPos = window.mapPixelToCoords(sf::Mouse::getPosition(window), view);
+                    bool isShiftPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift);
+
+                    const auto& selectedUnits = selectionManager->GetSelected();
+                    int numUnits = selectedUnits.size();
+
+                    if (numUnits > 0)
+                    {
+                        int cols = static_cast<int>(std::ceil(std::sqrt(numUnits)));
+                        // float rows = std::ceil((float)numUnits / cols); // Рядки рахувати не обов'язково для логіки
+
+                        float spacing = 16.f; 
+
+                        float offsetX = ((cols - 1) * spacing) / 2.f;
+                        float offsetY = ((std::ceil((float)numUnits / cols) - 1) * spacing) / 2.f;
+
+                        sf::Vector2f startPos = { targetPos.x - offsetX, targetPos.y - offsetY };
+
+                        int i = 0;
+                        for (auto& unit : selectedUnits)
+                        {
+                            int row = i / cols;
+                            int col = i % cols;
+
+                            sf::Vector2f unitTargetPos(
+                                startPos.x + col * spacing,
+                                startPos.y + row * spacing
+                            );
+
+                            unit->IssueCommand(new DefendAction(unitTargetPos), isShiftPressed);
+                            i++;
+                        }
+                    }
+                    break;
+                }
+                case PointerState::Build:
+                    break;
                 }
             }
         }
@@ -240,12 +346,11 @@ void GameState::Render()
     window.setView(view);
     tilemap->Render(window);
 
-    for (auto* obj : objects)
-        obj->Render(window);
-
     for (auto* camp : enemyCamps)
         camp->Render(window);
 
+    for (auto* obj : objects)
+        obj->Render(window);
 
     if (selectRect.GetStartedSelection())
         selectRect.Render(window);
@@ -257,6 +362,11 @@ void GameState::Render()
     window.setView(window.getDefaultView());
     if (settings.showFPS)
         window.draw(fpsText);
+}
+
+void GameState::LoadLastGame()
+{
+    saveManager->LoadLastGame(*this);
 }
 
 void GameState::OnResize()
@@ -426,7 +536,7 @@ nlohmann::json GameState::Serialize()
     gameState["enemy_camps"] = nlohmann::json::array();
     for (auto& enemyCamp : enemyCamps)
         gameState["enemy_camps"].push_back(enemyCamp->Serialize());
-    
+
     return gameState;
 }
 
@@ -474,7 +584,7 @@ void GameState::Deserialize(const nlohmann::json& data)
         if (enemyCampJson.value("id", 0) > maxNewID)
             maxNewID = enemyCampJson.value("id", 0) + 1;
 
-        EnemyCamp* camp = new EnemyCamp(*textures["tile"]);
+        EnemyCamp* camp = new EnemyCamp(*textures["tile"], objects, textures);
         camp->Deserialize(enemyCampJson);
         enemyCamps.push_back(camp);
     }

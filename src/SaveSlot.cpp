@@ -1,13 +1,18 @@
 #include "SaveSlot.h"
 
-SaveSlot::SaveSlot()
-    : SaveSlot("", "", "00-00-00 00:00:00")
+SaveSlot::SaveSlot(unsigned long id)
+    : SaveSlot(id, "", "", "00-00-00 00:00:00")
 {
 }
 
-SaveSlot::SaveSlot(std::string_view name, std::string_view filename, std::string_view datetime, std::time_t time_played)
+SaveSlot::SaveSlot(unsigned long id, std::string_view name, std::string_view filename, std::string_view datetime, std::time_t time_played)
     : name(name), filename(filename), datetime(datetime), timePlayed(time_played)
 {
+}
+
+unsigned long SaveSlot::GetID()
+{
+    return ID;
 }
 
 std::string SaveSlot::GetName()
@@ -54,6 +59,7 @@ nlohmann::json SaveSlot::Serialize()
 {
     nlohmann::json slot = nlohmann::json::object();
     
+    slot["id"] = ID;
     slot["name"] = name;
     slot["filename"] = filename;
     slot["datetime"] = datetime;
@@ -64,6 +70,7 @@ nlohmann::json SaveSlot::Serialize()
 
 void SaveSlot::Deserialize(const nlohmann::json& data)
 {
+    ID = data.value("id", 0);
     name = data.value("name", "");
     filename = data.value("filename", "");
     datetime = data.value("datetime", "00-00-00 00:00:00");
